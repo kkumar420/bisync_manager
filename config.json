@@ -1,0 +1,43 @@
+{
+    "remote": "my-gdrive",
+
+    "scheduler": {
+        "interval_minutes": 5
+    },
+
+    "defaults": {
+        "check_access": true,
+        "max_delete": 10,
+        "tpslimit": 5,
+        "tpslimit_burst": 5,
+        "transfers": 4,
+        "checkers": 8
+    },
+
+    "folders": [
+        {
+            "name": "Vaikunth",
+            "local_path": "/mnt/NewVolume/Documents/Vaikunth",
+            "remote_path": "Vaikunth",
+            "enabled": true
+        },
+        {
+            "name": "My_Library",
+            "local_path": "/mnt/NewVolume/Documents/My_Library",
+            "remote_path": "My_Library",
+            "enabled": true
+        },
+        {
+            "name": "BITS_Goa",
+            "local_path": "/mnt/NewVolume/Documents/BITS_Goa",
+            "remote_path": "BITS_Goa",
+            "enabled": true
+        },
+        {
+            "name": "DSA_Sheet",
+            "local_path": "/mnt/NewVolume/Documents/Love-Babbar-CPP-DSA-Course-main/DSA_Sheet",
+            "remote_path": "DSA_Sheet",
+            "enabled": true
+        }
+    ]
+}
