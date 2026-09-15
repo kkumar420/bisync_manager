@@ -1,7 +1,7 @@
 {
     "remote": "my-gdrive",
     "scheduler": {
-        "enabled": true,
+        "enabled": false,
         "interval_minutes": 5
     },
     "defaults": {
@@ -39,6 +39,13 @@
             "service": "rclone-dsa-sheet-bisync.service",
             "local_path": "/mnt/NewVolume/Documents/Love-Babbar-CPP-DSA-Course-main/DSA_Sheet",
             "remote_path": "DSA_Sheet",
+            "enabled": true
+        },
+        {
+            "name": "test_folder",
+            "local_path": "/mnt/NewVolume/Downloads/test_folder",
+            "remote_path": "test_folder",
+            "service": "rclone-test_folder-bisync.service",
             "enabled": true
         }
     ]
