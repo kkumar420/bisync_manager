@@ -36,7 +36,7 @@ def generate_dispatcher():
 
 def build_sync_command(folder):
     command = [
-        "rclone",
+        "/usr/bin/rclone",
         "bisync",
         folder["local_path"],
         f'{config["remote"]}:{folder["remote_path"]}',
@@ -254,3 +254,72 @@ def get_scheduler_status():
 
 def get_scheduler_interval():
     return config["scheduler"]["interval_minutes"]
+
+def escape_systemd_argument(argument):
+    """
+    Convert one argument into a form suitable for an
+    ExecStart= line in a systemd unit file.
+
+    We wrap every argument in double quotes so that spaces
+    and other whitespace are preserved as part of the same
+    argument.
+
+    Inside double quotes, systemd treats backslash, double
+    quote, %, and $ specially, so we escape those too.
+    """
+
+    argument = argument.replace("\\", "\\\\")
+    argument = argument.replace('"', '\\"')
+    argument = argument.replace("%", "%%")
+    argument = argument.replace("$", "$$")
+
+    return f'"{argument}"'
+
+
+def daemon_reload():
+    result = subprocess.run([
+        "systemctl",
+        "--user",
+        "daemon-reload",
+    ])
+
+    if result.returncode != 0:
+        print("Failed to reload systemd.")
+
+    return result
+
+
+def generate_service(folder):
+    service_path = (
+        f"/home/kkumar420/.config/systemd/user/"
+        f"{folder['service']}"
+    )
+
+    command = build_sync_command(folder)
+
+    # Convert each Python argument independently into
+    # systemd's ExecStart syntax.
+    #
+    # We do NOT join the raw strings directly because systemd
+    # itself parses ExecStart using whitespace and quoting rules.
+    exec_start = " ".join(
+        escape_systemd_argument(argument)
+        for argument in command
+    )
+
+    service_contents = f"""[Unit]
+Description=Bisync {folder["name"]} with Google Drive
+
+[Service]
+Type=oneshot
+ExecStart={exec_start}
+"""
+
+    with open(service_path, "w") as file:
+        file.write(service_contents)
+
+def generate_all_services():
+    for folder in folders.values():
+        generate_service(folder)
+
+    return daemon_reload()
