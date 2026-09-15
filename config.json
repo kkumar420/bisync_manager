@@ -1,6 +1,7 @@
 {
     "remote": "my-gdrive",
     "scheduler": {
+        "enabled": true,
         "interval_minutes": 5
     },
     "defaults": {

@@ -1,110 +1,214 @@
-import json
-import subprocess
+from manager import (
+    folders,
+    get_folder,
+    get_scheduler_status,
+    get_scheduler_interval,
+    pause,
+    resume,
+    run_sync,
+    sync_all,
+    pause_scheduler,
+    resume_scheduler,
+    set_scheduler_interval,
+)
 
-with open("config.json", "r") as file:
-    config = json.load(file)
 
-folders = {
-    folder["name"]: folder
-    for folder in config["folders"]
-}
+def show_folders():
+    """
+    Display every configured folder and whether it is
+    currently enabled for automatic syncing.
+    """
 
-def save_config():
-    with open("config.json", "w") as file:
-        json.dump(config, file, indent=4)
+    print("\nConfigured folders:")
+    print("-------------------")
 
-def generate_dispatcher():
-    dispatcher_path = "/home/kkumar420/.local/bin/rclone-bisync-all.sh"
+    for folder in folders.values():
 
-    with open(dispatcher_path, "w") as file:
-        file.write("#!/bin/bash\n\n")
+        if folder["enabled"]:
+            status = "ACTIVE"
+        else:
+            status = "PAUSED"
 
-        for folder in folders.values():
+        print(f"{folder['name']}: {status}")
 
-            if not folder["enabled"]:
+
+def show_scheduler():
+    """
+    Display the current global automatic-sync status
+    and the configured interval.
+    """
+    if get_scheduler_status():
+        status = "ACTIVE"
+    else:
+        status = "PAUSED"
+
+    print("\nAutomatic Sync")
+    print("--------------")
+    print(f"Status: {status}")
+    print(f"Interval: {get_scheduler_interval()} minutes")
+
+
+def main():
+
+    while True:
+
+        print("\nGoogle Drive Bisync Manager")
+        print("===========================")
+
+        print("\nGlobal")
+        print("1. Show scheduler status")
+        print("2. Pause automatic syncing")
+        print("3. Resume automatic syncing")
+        print("4. Change sync interval")
+
+        print("\nFolders")
+        print("5. Show folders")
+        print("6. Sync a folder")
+        print("7. Pause a folder")
+        print("8. Resume a folder")
+
+        print("\nActions")
+        print("9. Sync all")
+        print("10. Exit")
+
+        choice = input("\nChoose an option: ").strip()
+
+
+        # -------------------------------------------------
+        # Show scheduler status
+        # -------------------------------------------------
+
+        if choice == "1":
+
+            show_scheduler()
+
+
+        # -------------------------------------------------
+        # Pause automatic syncing
+        # -------------------------------------------------
+
+        elif choice == "2":
+
+            pause_scheduler()
+
+
+        # -------------------------------------------------
+        # Resume automatic syncing
+        # -------------------------------------------------
+
+        elif choice == "3":
+
+            resume_scheduler()
+
+
+        # -------------------------------------------------
+        # Change scheduler interval
+        # -------------------------------------------------
+
+        elif choice == "4":
+
+            try:
+                minutes = int(
+                    input("Enter interval in minutes: ").strip()
+                )
+
+                set_scheduler_interval(minutes)
+
+            except ValueError:
+
+                print("Please enter a valid number.")
+
+
+        # -------------------------------------------------
+        # Show folders
+        # -------------------------------------------------
+
+        elif choice == "5":
+
+            show_folders()
+
+
+        # -------------------------------------------------
+        # Sync one folder
+        # -------------------------------------------------
+
+        elif choice == "6":
+
+            name = input("Folder name: ").strip()
+
+            folder = get_folder(name)
+
+            if folder is None:
+
+                print(f"Folder '{name}' not found.")
                 continue
 
-            file.write(
-                f"systemctl --user start --wait "
-                f"{folder['service']} || true\n"
-            )
+            print(f"Syncing {name}...")
 
-def build_sync_command(folder):
-    command = [
-        "rclone",
-        "bisync",
-        folder["local_path"],
-        f'{config["remote"]}:{folder["remote_path"]}',
-    ]
+            result = run_sync(folder)
 
-    defaults = config["defaults"]
+            if result.returncode == 0:
 
-    if defaults["check_access"]:
-        command.append("--check-access")
-    
-    command.extend([
-        "--max-delete", str(defaults["max_delete"]),
-        "--tpslimit", str(defaults["tpslimit"]),
-        "--tpslimit-burst", str(defaults["tpslimit_burst"]),
-        "--transfers", str(defaults["transfers"]),
-        "--checkers", str(defaults["checkers"]),
-    ])
+                print(f"{name}: Sync successful")
 
-    return command
+            else:
 
-def run_sync(folder):
-    command = build_sync_command(folder)
-    return subprocess.run(command)
+                print(
+                    f"{name}: Sync failed "
+                    f"with code {result.returncode}"
+                )
 
-def get_folder(name):
-    return folders.get(name)
 
-def pause(name):
-    folder = get_folder(name)
+        # -------------------------------------------------
+        # Pause one folder
+        # -------------------------------------------------
 
-    if folder is None:
-        print(f"Folder '{name}' not found")
-        return
+        elif choice == "7":
 
-    if not folder["enabled"]:
-        print(f"{name} is already paused")
-        return
+            name = input("Folder name: ").strip()
 
-    folder["enabled"] = False
-    save_config()
-    generate_dispatcher()
-    print(f"{name} paused.")
+            pause(name)
 
-def resume(name):
-    folder = get_folder(name)
 
-    if folder is None:
-        print(f"Folder '{name}' not found")
-        return
+        # -------------------------------------------------
+        # Resume one folder
+        # -------------------------------------------------
 
-    if folder["enabled"]:
-        print(f"{name} is already active")
-        return
+        elif choice == "8":
 
-    folder["enabled"] = True
-    save_config()
-    generate_dispatcher()
-    print(f"{name} resumed")
+            name = input("Folder name: ").strip()
 
-def sync_all():
-    for folder in folders.values():
-        if not folder["enabled"]:
-            continue
+            resume(name)
 
-        print(f"Syncing {folder['name']}...")
 
-        result = run_sync(folder)
+        # -------------------------------------------------
+        # Sync all enabled folders
+        # -------------------------------------------------
 
-        if result.returncode == 0:
-            print(f"{folder['name']}: Sync successful")
+        elif choice == "9":
+
+            sync_all()
+
+
+        # -------------------------------------------------
+        # Exit
+        # -------------------------------------------------
+
+        elif choice == "10":
+
+            print("Goodbye.")
+            break
+
+
+        # -------------------------------------------------
+        # Invalid option
+        # -------------------------------------------------
+
         else:
-            print(f"{folder['name']}: Sync failed with code {result.returncode}")
+
+            print("Invalid option. Please choose a number "
+                  "from the menu.")
 
 
-pause("My_Library")
-pause("BITS_Goa")
+if __name__ == "__main__":
+    main()
