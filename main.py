@@ -52,7 +52,12 @@ def show_status():
 
     statuses = get_overall_status()
 
-    print(f"{'Folder':<15} {'Auto Sync':<12} {'State'}")
+    print(
+        f"{'Folder':<15} "
+        f"{'Auto Sync':<12} "
+        f"{'State'}"
+    )
+
     print("-" * 50)
 
     for folder in folders.values():
@@ -61,7 +66,11 @@ def show_status():
         auto_sync = statuses[name]["auto_sync"]
         state = statuses[name]["state"]
 
-        print(f"{name:<15} {auto_sync:<12} {state}")
+        print(
+            f"{name:<15} "
+            f"{auto_sync:<12} "
+            f"{state}"
+        )
 
 
 # =========================================================
@@ -71,6 +80,9 @@ def show_status():
 def main():
 
     while True:
+
+        print("\nGoogle Drive Bisync Manager")
+        print("===========================")
 
         print("\nGlobal")
         print("1. Show status")
@@ -130,6 +142,7 @@ def main():
         elif choice == "4":
 
             try:
+
                 minutes = int(
                     input("Enter interval in minutes: ").strip()
                 )
@@ -193,6 +206,10 @@ def main():
             resume(name)
 
 
+        # -------------------------------------------------
+        # Add a folder
+        # -------------------------------------------------
+
         elif choice == "8":
 
             name = input("Folder name: ").strip()
@@ -204,20 +221,40 @@ def main():
                 continue
 
             print(
-                "\nAdding a folder performs an initial bisync resync "
-                "to establish its state."
+                "\nBefore adding this folder, make sure the RCLONE_TEST "
+                "marker exists on both sides:"
+            )
+
+            print(
+                f"  Local:  {local_path}/RCLONE_TEST"
+            )
+
+            print(
+                f"  Remote: {remote_path}/RCLONE_TEST"
+            )
+
+            print(
+                "\nThe initial resync will use --resync and --check-access."
             )
 
             confirmation = input(
-                "Continue? [y/N]: "
+                "\nContinue? [y/N]: "
             ).strip().lower()
 
             if confirmation != "y":
                 print("Add cancelled.")
                 continue
 
-            add_folder(name, local_path, remote_path)
+            add_folder(
+                name,
+                local_path,
+                remote_path
+            )
 
+
+        # -------------------------------------------------
+        # Remove a folder
+        # -------------------------------------------------
 
         elif choice == "9":
 
@@ -241,6 +278,10 @@ def main():
             remove_folder(name)
 
 
+        # -------------------------------------------------
+        # Regenerate systemd setup
+        # -------------------------------------------------
+
         elif choice == "10":
 
             print("Regenerating systemd setup...")
@@ -248,6 +289,7 @@ def main():
             generate_systemd_setup()
 
             print("Systemd setup regenerated successfully.")
+
 
         # -------------------------------------------------
         # Sync all enabled folders
@@ -259,7 +301,7 @@ def main():
 
 
         # -------------------------------------------------
-        # Exit
+        # Resync one folder
         # -------------------------------------------------
 
         elif choice == "12":
@@ -273,23 +315,34 @@ def main():
                 continue
 
             print(f"Resyncing {name}...")
-            print("WARNING: This will reinitialize the bisync state.")
+            print(
+                "WARNING: This will reinitialize the bisync state."
+            )
 
             result = run_resync(folder)
 
             if result.returncode == 0:
+
                 print(f"{name}: Resync successful")
+
             else:
+
                 print(
                     f"{name}: Resync failed "
                     f"with code {result.returncode}"
-        )
+                )
 
+
+        # -------------------------------------------------
+        # Exit
+        # -------------------------------------------------
 
         elif choice == "13":
 
             print("Goodbye.")
             break
+
+
         # -------------------------------------------------
         # Invalid option
         # -------------------------------------------------

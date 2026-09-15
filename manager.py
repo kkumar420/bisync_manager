@@ -67,6 +67,9 @@ def write_generated_file(path, contents):
     """
 
     directory = os.path.dirname(path)
+    
+    # Make sure the destination directory exists.
+    os.makedirs(directory, exist_ok=True)
 
     # Create the temporary file in the same directory as the
     # destination so the final replacement can happen on the
@@ -197,6 +200,7 @@ def get_folder(name):
 
     return folders.get(name)
 
+
 def generate_service_name(name):
     """
     Generate the systemd service filename from a folder name.
@@ -211,6 +215,7 @@ def generate_service_name(name):
     service_name = name.lower().replace(" ", "-")
 
     return f"rclone-{service_name}-bisync.service"
+
 
 def run_sync(folder):
     """
@@ -508,6 +513,7 @@ def remove_folder(name):
     print(f"{name} removed successfully.")
 
     return True
+
 
 # =========================================================
 # DISPATCHER GENERATION
@@ -1035,5 +1041,3 @@ def get_overall_status():
         folder["name"]: get_folder_status(folder)
         for folder in folders.values()
     }
-
-# generate_systemd_setup()

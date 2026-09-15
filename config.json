@@ -1,7 +1,7 @@
 {
     "remote": "my-gdrive",
     "scheduler": {
-        "enabled": false,
+        "enabled": true,
         "interval_minutes": 5
     },
     "defaults": {
@@ -14,39 +14,39 @@
     },
     "folders": [
         {
+            "name": "BITS_Goa",
+            "local_path": "/mnt/NewVolume/Documents/BITS_Goa",
+            "remote_path": "BITS_Goa",
+            "service": "rclone-bits_goa-bisync.service",
+            "enabled": true
+        },
+        {
             "name": "Vaikunth",
-            "service": "rclone-vaikunth-bisync.service",
             "local_path": "/mnt/NewVolume/Documents/Vaikunth",
             "remote_path": "Vaikunth",
+            "service": "rclone-vaikunth-bisync.service",
             "enabled": true
         },
         {
             "name": "My_Library",
-            "service": "rclone-my-library-bisync.service",
             "local_path": "/mnt/NewVolume/Documents/My_Library",
             "remote_path": "My_Library",
-            "enabled": true
-        },
-        {
-            "name": "BITS_Goa",
-            "service": "rclone-bits-goa-bisync.service",
-            "local_path": "/mnt/NewVolume/Documents/BITS_Goa",
-            "remote_path": "BITS_Goa",
+            "service": "rclone-my_library-bisync.service",
             "enabled": true
         },
         {
             "name": "DSA_Sheet",
-            "service": "rclone-dsa-sheet-bisync.service",
             "local_path": "/mnt/NewVolume/Documents/Love-Babbar-CPP-DSA-Course-main/DSA_Sheet",
             "remote_path": "DSA_Sheet",
+            "service": "rclone-dsa_sheet-bisync.service",
             "enabled": true
         },
         {
-            "name": "test_folder",
-            "local_path": "/mnt/NewVolume/Downloads/test_folder",
-            "remote_path": "test_folder",
-            "service": "rclone-test_folder-bisync.service",
-            "enabled": false
+            "name": "my_code",
+            "local_path": "/mnt/NewVolume/Documents/my_code",
+            "remote_path": "my_code",
+            "service": "rclone-my_code-bisync.service",
+            "enabled": true
         }
     ]
 }
