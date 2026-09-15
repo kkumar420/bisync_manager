@@ -1,10 +1,8 @@
 {
     "remote": "my-gdrive",
-
     "scheduler": {
         "interval_minutes": 5
     },
-
     "defaults": {
         "check_access": true,
         "max_delete": 10,
@@ -13,28 +11,31 @@
         "transfers": 4,
         "checkers": 8
     },
-
     "folders": [
         {
             "name": "Vaikunth",
+            "service": "rclone-vaikunth-bisync.service",
             "local_path": "/mnt/NewVolume/Documents/Vaikunth",
             "remote_path": "Vaikunth",
             "enabled": true
         },
         {
             "name": "My_Library",
+            "service": "rclone-my-library-bisync.service",
             "local_path": "/mnt/NewVolume/Documents/My_Library",
             "remote_path": "My_Library",
             "enabled": true
         },
         {
             "name": "BITS_Goa",
+            "service": "rclone-bits-goa-bisync.service",
             "local_path": "/mnt/NewVolume/Documents/BITS_Goa",
             "remote_path": "BITS_Goa",
             "enabled": true
         },
         {
             "name": "DSA_Sheet",
+            "service": "rclone-dsa-sheet-bisync.service",
             "local_path": "/mnt/NewVolume/Documents/Love-Babbar-CPP-DSA-Course-main/DSA_Sheet",
             "remote_path": "DSA_Sheet",
             "enabled": true

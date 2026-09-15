@@ -4,6 +4,31 @@ import subprocess
 with open("config.json", "r") as file:
     config = json.load(file)
 
+folders = {
+    folder["name"]: folder
+    for folder in config["folders"]
+}
+
+def save_config():
+    with open("config.json", "w") as file:
+        json.dump(config, file, indent=4)
+
+def generate_dispatcher():
+    dispatcher_path = "/home/kkumar420/.local/bin/rclone-bisync-all.sh"
+
+    with open(dispatcher_path, "w") as file:
+        file.write("#!/bin/bash\n\n")
+
+        for folder in folders.values():
+
+            if not folder["enabled"]:
+                continue
+
+            file.write(
+                f"systemctl --user start --wait "
+                f"{folder['service']} || true\n"
+            )
+
 def build_sync_command(folder):
     command = [
         "rclone",
@@ -29,24 +54,57 @@ def build_sync_command(folder):
 
 def run_sync(folder):
     command = build_sync_command(folder)
-    result = subprocess.run(command)
-    return result.returncode
+    return subprocess.run(command)
 
-# print(f"Remote: {config['remote']}")
-# print(f"Interval:{config['scheduler']['interval_minutes']} minutes")
-# print()
+def get_folder(name):
+    return folders.get(name)
 
-# for folder in config["folders"]:
-#     # status = "ON" if folder["enabled"] else "OFF"
-#     # print(f"{folder['name']:<15} [{status}]")
-#     command = build_sync_command(folder)
+def pause(name):
+    folder = get_folder(name)
 
-#     print(folder["name"])
-#     print(command)
-#     print()
+    if folder is None:
+        print(f"Folder '{name}' not found")
+        return
 
-folder = config["folders"][1]
+    if not folder["enabled"]:
+        print(f"{name} is already paused")
+        return
 
-return_code = run_sync(folder)
+    folder["enabled"] = False
+    save_config()
+    generate_dispatcher()
+    print(f"{name} paused.")
 
-print(f"rclone exited with the code: {return_code}")
+def resume(name):
+    folder = get_folder(name)
+
+    if folder is None:
+        print(f"Folder '{name}' not found")
+        return
+
+    if folder["enabled"]:
+        print(f"{name} is already active")
+        return
+
+    folder["enabled"] = True
+    save_config()
+    generate_dispatcher()
+    print(f"{name} resumed")
+
+def sync_all():
+    for folder in folders.values():
+        if not folder["enabled"]:
+            continue
+
+        print(f"Syncing {folder['name']}...")
+
+        result = run_sync(folder)
+
+        if result.returncode == 0:
+            print(f"{folder['name']}: Sync successful")
+        else:
+            print(f"{folder['name']}: Sync failed with code {result.returncode}")
+
+
+pause("My_Library")
+pause("BITS_Goa")
