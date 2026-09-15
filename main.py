@@ -203,6 +203,19 @@ def main():
                 print("All fields are required.")
                 continue
 
+            print(
+                "\nAdding a folder performs an initial bisync resync "
+                "to establish its state."
+            )
+
+            confirmation = input(
+                "Continue? [y/N]: "
+            ).strip().lower()
+
+            if confirmation != "y":
+                print("Add cancelled.")
+                continue
+
             add_folder(name, local_path, remote_path)
 
 

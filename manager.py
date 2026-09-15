@@ -353,15 +353,36 @@ def resume(name):
 
 def add_folder(name, local_path, remote_path):
     """
-    Add a new folder to the configuration.
+    Add a new folder and initialize its bisync state.
 
-    The folder is enabled by default and receives a generated
-    systemd service name.
+    The folder is initially disabled so that it cannot enter
+    a normal automatic sync before its first --resync succeeds.
+
+    If the resync succeeds, the folder is enabled and added
+    to the automatic dispatcher.
+
+    If the resync fails, the folder remains in the configuration
+    but stays disabled so it can be fixed and retried later.
     """
 
     # Prevent duplicate folder names.
     if get_folder(name) is not None:
         print(f"Folder '{name}' already exists.")
+        return False
+
+    # Validate the folder name.
+    if not name:
+        print("Folder name cannot be empty.")
+        return False
+
+    # The local directory must already exist.
+    if not os.path.isdir(local_path):
+        print(f"Local path does not exist: {local_path}")
+        return False
+
+    # The remote path cannot be empty.
+    if not remote_path:
+        print("Remote path cannot be empty.")
         return False
 
     service_name = generate_service_name(name)
@@ -371,29 +392,67 @@ def add_folder(name, local_path, remote_path):
         "local_path": local_path,
         "remote_path": remote_path,
         "service": service_name,
-        "enabled": True,
+
+        # Do NOT enable the folder yet.
+        #
+        # It must first complete its initial --resync.
+        "enabled": False,
     }
 
-    # Add the folder to the main configuration.
+    # Add the folder to the configuration.
     config["folders"].append(folder)
 
-    # Add the same folder to the lookup dictionary so that
-    # get_folder() can find it immediately.
+    # Add the same folder to the lookup dictionary.
     folders[name] = folder
 
-    # Save the updated configuration.
+    # Save the folder immediately so that it exists in
+    # config.json even if the initial resync fails.
     save_config()
 
-    # Generate the new folder's systemd service.
+    # Generate its normal permanent service.
     generate_service(folder)
 
-    # Regenerate the dispatcher so automatic cycles include it.
+    # Regenerate the dispatcher.
+    #
+    # The folder is currently disabled, so it will NOT be
+    # included in automatic sync cycles.
     generate_dispatcher()
 
-    # Tell systemd about the newly generated service.
+    # Tell systemd about the new service.
     daemon_reload()
 
-    print(f"{name} added successfully.")
+    print(f"\n{name} added.")
+    print("Initializing bisync state...")
+
+    # Perform the required initial resync.
+    result = run_resync(folder)
+
+    if result.returncode != 0:
+
+        print(
+            f"\nInitial resync for {name} failed."
+        )
+        print(
+            "The folder was added but remains disabled."
+        )
+        print(
+            "Fix the problem and run resync manually."
+        )
+
+        return False
+
+    # Initial resync succeeded, so the folder is now safe
+    # to include in normal automatic syncing.
+    folder["enabled"] = True
+
+    save_config()
+
+    # Regenerate the dispatcher so the newly initialized
+    # folder is now included.
+    generate_dispatcher()
+
+    print(f"\n{name} initialized successfully.")
+    print("Automatic syncing enabled.")
 
     return True
 

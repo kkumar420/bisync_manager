@@ -46,7 +46,7 @@
             "local_path": "/mnt/NewVolume/Downloads/test_folder",
             "remote_path": "test_folder",
             "service": "rclone-test_folder-bisync.service",
-            "enabled": true
+            "enabled": false
         }
     ]
 }
