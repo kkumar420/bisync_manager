@@ -417,12 +417,6 @@ def add_folder(name, local_path, remote_path):
     # Generate its normal permanent service.
     generate_service(folder)
 
-    # Regenerate the dispatcher.
-    #
-    # The folder is currently disabled, so it will NOT be
-    # included in automatic sync cycles.
-    generate_dispatcher()
-
     # Tell systemd about the new service.
     daemon_reload()
 

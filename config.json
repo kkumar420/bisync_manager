@@ -25,7 +25,7 @@
             "local_path": "/mnt/NewVolume/Documents/Vaikunth",
             "remote_path": "Vaikunth",
             "service": "rclone-vaikunth-bisync.service",
-            "enabled": true
+            "enabled": false
         },
         {
             "name": "My_Library",
