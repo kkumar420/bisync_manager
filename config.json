@@ -1,9 +1,11 @@
 {
-    "remote": "my-gdrive",
+    "remote": "your-rclone-remote",
+
     "scheduler": {
         "enabled": true,
         "interval_minutes": 5
     },
+
     "defaults": {
         "check_access": true,
         "max_delete": 10,
@@ -12,41 +14,21 @@
         "transfers": 4,
         "checkers": 8
     },
+
     "folders": [
         {
-            "name": "BITS_Goa",
-            "local_path": "/mnt/NewVolume/Documents/BITS_Goa",
-            "remote_path": "BITS_Goa",
-            "service": "rclone-bits_goa-bisync.service",
+            "name": "Example_Folder",
+            "local_path": "/path/to/local/Example_Folder",
+            "remote_path": "Example_Folder",
+            "service": "rclone-example_folder-bisync.service",
             "enabled": true
         },
         {
-            "name": "Vaikunth",
-            "local_path": "/mnt/NewVolume/Documents/Vaikunth",
-            "remote_path": "Vaikunth",
-            "service": "rclone-vaikunth-bisync.service",
+            "name": "Another_Folder",
+            "local_path": "/path/to/local/Another_Folder",
+            "remote_path": "Another_Folder",
+            "service": "rclone-another_folder-bisync.service",
             "enabled": false
-        },
-        {
-            "name": "My_Library",
-            "local_path": "/mnt/NewVolume/Documents/My_Library",
-            "remote_path": "My_Library",
-            "service": "rclone-my_library-bisync.service",
-            "enabled": true
-        },
-        {
-            "name": "DSA_Sheet",
-            "local_path": "/mnt/NewVolume/Documents/Love-Babbar-CPP-DSA-Course-main/DSA_Sheet",
-            "remote_path": "DSA_Sheet",
-            "service": "rclone-dsa_sheet-bisync.service",
-            "enabled": true
-        },
-        {
-            "name": "my_code",
-            "local_path": "/mnt/NewVolume/Documents/my_code",
-            "remote_path": "my_code",
-            "service": "rclone-my_code-bisync.service",
-            "enabled": true
         }
     ]
 }
