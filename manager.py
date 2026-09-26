@@ -681,8 +681,12 @@ def generate_timer():
     Generate the systemd timer responsible for scheduling
     automatic sync cycles.
 
-    The interval is measured from the completion of the
-    master service, so sync cycles do not overlap.
+    OnBootSec provides the initial trigger after the timer
+    starts.
+
+    OnUnitInactiveSec schedules the next cycle after the
+    master service becomes inactive, so sync cycles remain
+    separated by the configured interval.
     """
 
     timer_path = os.path.join(
@@ -699,8 +703,8 @@ def generate_timer():
 Description=Run all rclone bisync jobs
 
 [Timer]
+OnBootSec=2min
 OnUnitInactiveSec={interval}min
-Persistent=true
 
 [Install]
 WantedBy=timers.target
@@ -716,9 +720,6 @@ WantedBy=timers.target
 def sync_scheduler_state():
     """
     Make the actual systemd timer state match config.json.
-
-    This function starts/stops the timer only. It does not
-    manually trigger a sync.
     """
 
     timer = "rclone-bisync-all.timer"
@@ -729,7 +730,13 @@ def sync_scheduler_state():
             "systemctl",
             "--user",
             "enable",
-            "--now",
+            timer,
+        ])
+
+        subprocess.run([
+            "systemctl",
+            "--user",
+            "restart",
             timer,
         ])
 
