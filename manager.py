@@ -108,6 +108,64 @@ def daemon_reload():
     return result
 
 
+
+def reconnect_google_drive():
+    """
+    Run rclone's interactive OAuth reconnect flow for the configured remote.
+
+    This is an explicit CLI action. It is not run by the background timer.
+    """
+
+    remote_name = config["remote"]
+
+    print(
+        f"\nRefreshing Google Drive authorization for '{remote_name}'..."
+    )
+    print("Complete the authorization flow in your browser if prompted.\n")
+
+    result = subprocess.run([
+        "/usr/bin/rclone",
+        "config",
+        "reconnect",
+        f"{remote_name}:",
+    ])
+
+    if result.returncode == 0:
+        print("Google Drive authorization command completed successfully.")
+    else:
+        print(
+            "Google Drive authorization was not completed. "
+            f"rclone exited with code {result.returncode}."
+        )
+
+    return result
+
+
+def show_service_logs(service, lines=100):
+    """
+    Display recent journal entries for a systemd user service.
+
+    journalctl is run in the foreground so its normal pager controls
+    remain available when the CLI is used in a terminal.
+    """
+
+    print(f"\nShowing the last {lines} journal entries for {service}...\n")
+
+    result = subprocess.run([
+        "journalctl",
+        "--user",
+        "-u",
+        service,
+        "-n",
+        str(lines),
+    ])
+
+    if result.returncode != 0:
+        print(f"Could not read journal entries for {service}.")
+
+    return result
+
+
 # =========================================================
 # RCLONE COMMAND BUILDING
 # =========================================================

@@ -1,6 +1,5 @@
 from manager import (
     folders,
-    get_folder,
     get_overall_status,
     get_scheduler_status,
     get_scheduler_interval,
@@ -15,6 +14,8 @@ from manager import (
     add_folder,
     remove_folder,
     generate_systemd_setup,
+    reconnect_google_drive,
+    show_service_logs,
 )
 
 
@@ -73,6 +74,109 @@ def show_status():
         )
 
 
+def prompt_log_line_count():
+    """Ask how many recent journal entries to display (default: 100)."""
+
+    while True:
+
+        value = input(
+            "Number of log entries to display [100]: "
+        ).strip()
+
+        # An empty input uses the default value.
+        if not value:
+            return 100
+
+        try:
+            lines = int(value)
+        except ValueError:
+            print("Please enter a valid positive integer.")
+            continue
+
+        if lines <= 0:
+            print("Please enter a number greater than zero.")
+            continue
+
+        return lines
+
+
+def select_folder(show_service=False):
+    """Display configured folders as a numbered list and return the selection."""
+
+    folder_list = list(folders.values())
+
+    if not folder_list:
+        print("No folders are configured.")
+        return None
+
+    print("\nConfigured folders")
+
+    for index, folder in enumerate(folder_list, start=1):
+        label = folder["name"]
+
+        if show_service:
+            label += f" ({folder['service']})"
+
+        print(f"{index}. {label}")
+
+    print("0. Cancel")
+
+    choice = input("\nChoose a folder number: ").strip()
+
+    try:
+        folder_index = int(choice)
+    except ValueError:
+        print("Please enter a valid number.")
+        return None
+
+    if folder_index == 0:
+        print("Cancelled.")
+        return None
+
+    if folder_index < 1 or folder_index > len(folder_list):
+        print("Invalid folder number.")
+        return None
+
+    return folder_list[folder_index - 1]
+
+
+def inspect_system_logs():
+    """Let the user inspect the master or an individual folder service log."""
+
+    while True:
+
+        print("\nSystem Logs")
+        print("-----------")
+        print("1. Master service (rclone-bisync-all.service)")
+        print("2. Individual folder service")
+        print("3. Back to main menu")
+
+        choice = input("\nChoose an option: ").strip()
+
+        if choice == "1":
+
+            lines = prompt_log_line_count()
+            show_service_logs("rclone-bisync-all.service", lines=lines)
+
+        elif choice == "2":
+
+            folder = select_folder(show_service=True)
+
+            if folder is None:
+                continue
+
+            lines = prompt_log_line_count()
+            show_service_logs(folder["service"], lines=lines)
+
+        elif choice == "3":
+
+            break
+
+        else:
+
+            print("Invalid option. Please choose a number from the menu.")
+
+
 # =========================================================
 # MAIN CLI
 # =========================================================
@@ -99,14 +203,15 @@ def main():
 
         print("\nSystem")
         print("10. Regenerate systemd setup")
+        print("11. Refresh Google Drive token")
+        print("12. Inspect system logs")
 
         print("\nActions")
-        print("11. Sync all")
-        print("12. Resync a folder")
-        print("13. Exit")
+        print("13. Sync all")
+        print("14. Resync a folder")
+        print("15. Exit")
 
         choice = input("\nChoose an option: ").strip()
-
 
         # -------------------------------------------------
         # Show complete status
@@ -116,7 +221,6 @@ def main():
 
             show_status()
 
-
         # -------------------------------------------------
         # Pause automatic syncing
         # -------------------------------------------------
@@ -125,7 +229,6 @@ def main():
 
             pause_scheduler()
 
-
         # -------------------------------------------------
         # Resume automatic syncing
         # -------------------------------------------------
@@ -133,7 +236,6 @@ def main():
         elif choice == "3":
 
             resume_scheduler()
-
 
         # -------------------------------------------------
         # Change scheduler interval
@@ -153,20 +255,18 @@ def main():
 
                 print("Please enter a valid number.")
 
-
         # -------------------------------------------------
         # Sync one folder
         # -------------------------------------------------
 
         elif choice == "5":
 
-            name = input("Folder name: ").strip()
-
-            folder = get_folder(name)
+            folder = select_folder()
 
             if folder is None:
-                print(f"Folder '{name}' not found.")
                 continue
+
+            name = folder["name"]
 
             print(f"Syncing {name}...")
 
@@ -183,17 +283,18 @@ def main():
                     f"with code {result.returncode}"
                 )
 
-
         # -------------------------------------------------
         # Pause one folder
         # -------------------------------------------------
 
         elif choice == "6":
 
-            name = input("Folder name: ").strip()
+            folder = select_folder()
 
-            pause(name)
+            if folder is None:
+                continue
 
+            pause(folder["name"])
 
         # -------------------------------------------------
         # Resume one folder
@@ -201,10 +302,12 @@ def main():
 
         elif choice == "7":
 
-            name = input("Folder name: ").strip()
+            folder = select_folder()
 
-            resume(name)
+            if folder is None:
+                continue
 
+            resume(folder["name"])
 
         # -------------------------------------------------
         # Add a folder
@@ -251,20 +354,18 @@ def main():
                 remote_path
             )
 
-
         # -------------------------------------------------
         # Remove a folder
         # -------------------------------------------------
 
         elif choice == "9":
 
-            name = input("Folder name: ").strip()
-
-            folder = get_folder(name)
+            folder = select_folder()
 
             if folder is None:
-                print(f"Folder '{name}' not found.")
                 continue
+
+            name = folder["name"]
 
             confirmation = input(
                 f"Remove '{name}'? This will delete its generated "
@@ -276,7 +377,6 @@ def main():
                 continue
 
             remove_folder(name)
-
 
         # -------------------------------------------------
         # Regenerate systemd setup
@@ -290,29 +390,42 @@ def main():
 
             print("Systemd setup regenerated successfully.")
 
+        # -------------------------------------------------
+        # Refresh Google Drive OAuth token
+        # -------------------------------------------------
+
+        elif choice == "11":
+
+            reconnect_google_drive()
+
+        # -------------------------------------------------
+        # Inspect systemd journal logs
+        # -------------------------------------------------
+
+        elif choice == "12":
+
+            inspect_system_logs()
 
         # -------------------------------------------------
         # Sync all enabled folders
         # -------------------------------------------------
 
-        elif choice == "11":
+        elif choice == "13":
 
             sync_all()
-
 
         # -------------------------------------------------
         # Resync one folder
         # -------------------------------------------------
 
-        elif choice == "12":
+        elif choice == "14":
 
-            name = input("Folder name: ").strip()
-
-            folder = get_folder(name)
+            folder = select_folder()
 
             if folder is None:
-                print(f"Folder '{name}' not found.")
                 continue
+
+            name = folder["name"]
 
             print(f"Resyncing {name}...")
             print(
@@ -332,16 +445,14 @@ def main():
                     f"with code {result.returncode}"
                 )
 
-
         # -------------------------------------------------
         # Exit
         # -------------------------------------------------
 
-        elif choice == "13":
+        elif choice == "15":
 
             print("Goodbye.")
             break
-
 
         # -------------------------------------------------
         # Invalid option
